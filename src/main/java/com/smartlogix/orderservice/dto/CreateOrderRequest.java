@@ -6,8 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-/**
- *Example JSON for a new order
+/**Example JSON for a new order:
  * {
  *   "clientId": 1,
  *   "items": [
