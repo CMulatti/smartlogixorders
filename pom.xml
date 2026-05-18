@@ -96,6 +96,13 @@
 			<version>2.2.0</version>
 		</dependency>
 
+		<!-- Kafka — lets us send messages to a Kafka topic -->
+		<dependency>
+			<groupId>org.springframework.kafka</groupId>
+			<artifactId>spring-kafka</artifactId>
+		</dependency>
+
+
 
 	</dependencies>
 

@@ -11,6 +11,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.smartlogix.orderservice.dto.OrderCreatedEvent;
+import org.springframework.kafka.core.KafkaTemplate;
+
 import java.util.List;
 
 @Service
@@ -18,13 +21,19 @@ import java.util.List;
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final RestTemplate restTemplate; //injected from RestTemplateConfig
+    private final RestTemplate restTemplate; //injected from RestTemplateConfig, we are still calling PRODUCTSERVICE with this
+
+    private final KafkaTemplate<String, String> kafkaTemplate;
+
+    //Topic name as a constant so it's easy to find and change
+    private static final String ORDER_CREATED_TOPIC = "order-created";
+
 
     @Value("${app.productservice.url}") //the urls from aṕplication.properties @Value("${property.key}") reads a property at startup.
     private String productServiceUrl;
 
-    @Value("${app.shipmentservice.url}")
-    private String shipmentServiceUrl;
+//    @Value("${app.shipmentservice.url}")
+//    private String shipmentServiceUrl;
 
     //--------- READ ----------------------------------------------------------------------------
 
@@ -72,21 +81,45 @@ public class OrderService {
             restTemplate.postForObject(productUrl, stockRequest, Object.class); //Spring converts the map into JSON automatically
         }
 
-        // Tell SHIPMENTSERVICE to create a shipment for this order (via HTTP).
-        String shipmentUrl = shipmentServiceUrl + "/shipments";
+//      // ------------------------------ no longer in use -------------------------------------------------------------
+//        Tell SHIPMENTSERVICE to create a shipment for this order (via HTTP).
+//        String shipmentUrl = shipmentServiceUrl + "/shipments";
+//
+//        java.util.Map<String, Object> shipmentRequest = new java.util.HashMap<>();
+//        shipmentRequest.put("orderId", savedOrder.getOrderId());
+//        shipmentRequest.put("shippingCompany", request.getShippingCompany());
+//        shipmentRequest.put("shippingAddress", request.getShippingAddress());
+//        //shipmentStatus defaults to "pendiente" on SHIPMENTSERVICE side
+//
+//        restTemplate.postForObject(shipmentUrl, shipmentRequest, Object.class);
+        //--------------------------------------------------------------------------------------------------------------
 
-        java.util.Map<String, Object> shipmentRequest = new java.util.HashMap<>();
-        shipmentRequest.put("orderId", savedOrder.getOrderId());
-        shipmentRequest.put("shippingCompany", request.getShippingCompany());
-        shipmentRequest.put("shippingAddress", request.getShippingAddress());
-        //shipmentStatus defaults to "pendiente" on SHIPMENTSERVICE side
 
-        restTemplate.postForObject(shipmentUrl, shipmentRequest, Object.class);
+        //Publish event to Kafka
+        // We build the event object (the "message envelope")
+        OrderCreatedEvent event = new OrderCreatedEvent(
+                savedOrder.getOrderId(),
+                request.getShippingCompany(),
+                request.getShippingAddress()
+        );
+
+        //kafkaTemplate.send(topicName, message)
+        //serialises the event to JSON, drops it into the "order-created" topic and returns immediately. No wait for SHIPMENTSERVICE.
+        // SHIPMENTSERVICE will pick it up on its own, whenever it's ready*/
+        String eventJson = String.format(
+                "{\"orderId\":%d,\"shippingCompany\":\"%s\",\"shippingAddress\":\"%s\"}",
+                savedOrder.getOrderId(),
+                request.getShippingCompany(),
+                request.getShippingAddress()
+        );
+        kafkaTemplate.send(ORDER_CREATED_TOPIC, eventJson);
+
+        System.out.println("[OrderService] Event published to Kafka topic '" + ORDER_CREATED_TOPIC + "' for orderId: " + savedOrder.getOrderId());
 
         return savedOrder;
     }
 
-    //------------- UPDATE ORDER STATUS (called by SHIPMENTSERVICE) ---------------------
+    //------------- UPDATE ORDER STATUS (called by SHIPMENTSERVICE via RestTemplate) ---------------------
     /** SHIPMENTSERVICE calls this endpoint (via RestTemplate) when its status changes.
      * It tells US which order to update and what the new status should be.
      * Valid statuses: creada → enviada → completada
