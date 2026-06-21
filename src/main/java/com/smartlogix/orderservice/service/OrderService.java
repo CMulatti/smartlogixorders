@@ -16,6 +16,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 
 import java.util.List;
 
+
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -28,12 +29,14 @@ public class OrderService {
     //Topic name as a constant so it's easy to find and change
     private static final String ORDER_CREATED_TOPIC = "order-created";
 
+    private final ExternalApiService externalApiService;
 
     @Value("${app.productservice.url}") //the urls from aṕplication.properties @Value("${property.key}") reads a property at startup.
     private String productServiceUrl;
 
 //    @Value("${app.shipmentservice.url}")
 //    private String shipmentServiceUrl;
+
 
     //--------- READ ----------------------------------------------------------------------------
 
@@ -65,12 +68,8 @@ public class OrderService {
         }
 
 
-        //--- STEP 2: ORM TO SQL: SAVE ORDER AND ITS ITEMS TO OUR DB (cascade saves the items (children) too)----
-        Order savedOrder = orderRepository.save(order);
-
-
-        //--- STEP 3: RestTemplate HTTP COMMUNICATION ------
-        // For each item, tell PRODUCTSERVICE to reduce stock (via HTTP).
+        //--- STEP 2: RestTemplate HTTP COMMUNICATION ------
+        // First check stock with PRODUCTSERVICE (before saving)
         for (OrderItemRequest itemReq : request.getItems()) {
             String productUrl = productServiceUrl + "/products/reduce-stock";
 
@@ -78,8 +77,12 @@ public class OrderService {
             stockRequest.put("productId", itemReq.getProductId());
             stockRequest.put("quantity", itemReq.getQuantity());
 
-            restTemplate.postForObject(productUrl, stockRequest, Object.class); //Spring converts the map into JSON automatically
+            //restTemplate.postForObject(productUrl, stockRequest, Object.class); //Spring converts the map into JSON automatically
+            externalApiService.notifyProductService(productUrl, stockRequest); // now we replaced the direct restTemplate call in the line above with the new method from circuit breaker
         }
+
+        //--- STEP 3: Only save the order if ALL stock reductions succeeded
+        Order savedOrder = orderRepository.save(order);
 
 //      // ------------------------------ no longer in use -------------------------------------------------------------
 //        Tell SHIPMENTSERVICE to create a shipment for this order (via HTTP).
