@@ -1,7 +1,7 @@
 package com.smartlogix.orderservice.controller;
 
 import com.smartlogix.orderservice.dto.CreateOrderRequest;
-import com.smartlogix.orderservice.dto.OrderStatusUpdateRequest;
+//import com.smartlogix.orderservice.dto.OrderStatusUpdateRequest;
 import com.smartlogix.orderservice.entity.Order;
 import com.smartlogix.orderservice.service.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -36,11 +36,11 @@ public class OrderController {
     }
 
 
-    //PUT orders/status  internal endpoint called by SHIPMENTSERVICE. SHIPMENTSERVICE ("orderId": 1, "newOrderStatus": "enviada")
-    @PutMapping("/status")
-    public ResponseEntity<Order> updateOrderStatus(@RequestBody OrderStatusUpdateRequest request) {
-        return ResponseEntity.ok(orderService.updateOrderStatus(request));
-    }
+//    //PUT orders/status  internal endpoint called by SHIPMENTSERVICE. SHIPMENTSERVICE ("orderId": 1, "newOrderStatus": "enviada")
+//    @PutMapping("/status")
+//    public ResponseEntity<Order> updateOrderStatus(@RequestBody OrderStatusUpdateRequest request) {
+//        return ResponseEntity.ok(orderService.updateOrderStatus(request));
+//    }
 
 
     @DeleteMapping("/{id}")

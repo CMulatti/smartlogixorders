@@ -2,7 +2,7 @@ package com.smartlogix.orderservice.service;
 
 import com.smartlogix.orderservice.dto.CreateOrderRequest;
 import com.smartlogix.orderservice.dto.OrderItemRequest;
-import com.smartlogix.orderservice.dto.OrderStatusUpdateRequest;
+//import com.smartlogix.orderservice.dto.OrderStatusUpdateRequest;
 import com.smartlogix.orderservice.entity.Order;
 import com.smartlogix.orderservice.entity.OrderItem;
 import com.smartlogix.orderservice.repository.OrderRepository;
@@ -34,7 +34,7 @@ public class OrderService {
     @Value("${app.productservice.url}") //the urls from aṕplication.properties @Value("${property.key}") reads a property at startup.
     private String productServiceUrl;
 
-//    @Value("${app.shipmentservice.url}")
+//    @Value("${app.shipmentservice.url}") We no longer call ShipmentService directly via Rest, now we use Kafka, so this is no longer needed
 //    private String shipmentServiceUrl;
 
 
@@ -122,21 +122,27 @@ public class OrderService {
         return savedOrder;
     }
 
-    //------------- UPDATE ORDER STATUS (called by SHIPMENTSERVICE via RestTemplate) ---------------------
-    /** SHIPMENTSERVICE calls this endpoint (via RestTemplate) when its status changes.
-     * It tells US which order to update and what the new status should be.
-     * Valid statuses: creada → enviada → completada
-     * We do NOT call SHIPMENTSERVICE back from here, that would create a loop! Clear ownership: ORDERSERVICE owns order_status.
-     * The flow is like this:
-     * 1. SHIPMENT SERVICE sends HTTP request
-     * 2. OrderController receives it
-     * 3. Spring converts JSON to an OrderStatusUpdateRequest DTO object
-     * 4. OrderController calls orderService.updateOrderStatus(request)
-     * 5. OrderService fetches order from DB, updates it status, and saves it to DB via orderRepository */
-    public Order updateOrderStatus(OrderStatusUpdateRequest request) {
-        Order order = getOrderById(request.getOrderId());
-        order.setOrderStatus(request.getNewOrderStatus());
-        return orderRepository.save(order);
+//    //------------- UPDATE ORDER STATUS (called by SHIPMENTSERVICE via RestTemplate) ---------------------
+//    /** SHIPMENTSERVICE calls this endpoint (via RestTemplate) when its status changes.
+//     * It tells US which order to update and what the new status should be.
+//     * Valid statuses: creada → enviada → completada
+//     * We do NOT call SHIPMENTSERVICE back from here, that would create a loop! Clear ownership: ORDERSERVICE owns order_status.
+//     * The flow is like this:
+//     * 1. SHIPMENT SERVICE sends HTTP request
+//     * 2. OrderController receives it
+//     * 3. Spring converts JSON to an OrderStatusUpdateRequest DTO object
+//     * 4. OrderController calls orderService.updateOrderStatus(request)
+//     * 5. OrderService fetches order from DB, updates it status, and saves it to DB via orderRepository */
+//    public Order updateOrderStatus(OrderStatusUpdateRequest request) {
+//        Order order = getOrderById(request.getOrderId());
+//        order.setOrderStatus(request.getNewOrderStatus());
+//        return orderRepository.save(order);
+//    }
+
+    public void updateOrderStatusFromEvent(Long orderId, String newOrderStatus) {
+        Order order = getOrderById(orderId);
+        order.setOrderStatus(newOrderStatus);
+        orderRepository.save(order);
     }
 
     //---------------------- DELETE ----------------------------------------------
