@@ -4,7 +4,6 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
 import java.util.Map;
 
 @Service
@@ -23,3 +22,4 @@ public class ExternalApiService {
         throw new RuntimeException("Ups! No es posible actualizar stock en este momento. Por favor intente más tarde.");
     }
 }
+
