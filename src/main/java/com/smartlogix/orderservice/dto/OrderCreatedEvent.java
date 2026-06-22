@@ -1,3 +1,6 @@
+//outgoing Kafka message published to the order-created topic after an order is saved.
+// ShipmentService reads this to create the shipment automatically.
+
 package com.smartlogix.orderservice.dto;
 
 import lombok.AllArgsConstructor;

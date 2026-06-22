@@ -1,3 +1,6 @@
+//Nested inside CreateOrderRequest, represents one product line in the order (productId + quantity).
+// Spring deserialises each item in the list into this DTO automatically.
+
 package com.smartlogix.orderservice.dto;
 
 import lombok.Getter;

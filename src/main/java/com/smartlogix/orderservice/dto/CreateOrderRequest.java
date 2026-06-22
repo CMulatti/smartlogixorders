@@ -1,3 +1,8 @@
+//incoming HTTP request from the frontend when admin clicks "Generar Pedido".
+// Contains clientId, list of items, shippingCompany and shippingAddress.
+// Used by OrderController → OrderService.createOrder().
+
+
 package com.smartlogix.orderservice.dto;
 
 import lombok.Getter;
