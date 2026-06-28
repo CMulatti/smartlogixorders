@@ -10,6 +10,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.stereotype.Component;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.client.RestTemplate;
 
@@ -32,6 +33,7 @@ import static org.mockito.Mockito.when;
  * BlockingQueue= Thread-safe way to wait for async messages*/
 
 @SpringBootTest
+@ActiveProfiles("test")
 @EmbeddedKafka(
         partitions = 1,
         topics = {"order-created"},
